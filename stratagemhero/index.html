@@ -335,8 +335,6 @@
 				ctx.fillText("Enter any Stratagem Input to Start!", 0.5*cnv.width, 0.8*cnv.height);
 			}
 			onKey(key) {
-				for (let i = 0; i < stratagems.length; i++)
-					document.getElementById("check-stratagem-"+i.toString()).disabled = true;
 				logic = new Game();
 			}
 		};
@@ -346,6 +344,8 @@
 				this.score = 0;
 				this.round = 1;
 				this.startGetReady();
+				for (let i = 0; i < stratagems.length; i++)
+					document.getElementById("check-stratagem-"+i.toString()).disabled = true;
 			}
 			startRound() {
 				this.getReady = false;
@@ -377,14 +377,19 @@
 				if (this.queue.length == 0) {
 					this.round++;
 					this.startGetReady();
+					return;
 				}
 
 				let timerTime = (millis() - this.tStart) / 1000 - this.bonusTime;
 				let timerProg = timerTime / 10;
 				timerProg = Math.min(Math.max(timerProg, 0), 1);
 				
-				if (timerProg >= 1)
+				if (timerProg >= 1) {
 					logic = new GameOver(this.score);
+					for (let i = 0; i < stratagems.length; i++)
+						document.getElementById("check-stratagem-"+i.toString()).disabled = false;
+					return;
+				}
 
 				ctx.strokeStyle = colorAccent;
 				ctx.lineWidth = 2;
