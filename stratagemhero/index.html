@@ -76,7 +76,7 @@
 			font-family: "Teko";
 			font-size: 22px;
 			color: var(--accent);
-			cursor: default;
+			cursor: pointer;
 			user-select: none;
 			font-weight: 300;
 			margin-left: 5px;
@@ -360,12 +360,12 @@
 			let btnAdd = document.createElement("span");
 			btnAdd.classList.add("text-button");
 			btnAdd.innerHTML = "(+)";
-			btnAdd.onclick = setCheckedAllFn(true, (sg) => sg.category == category);
+			btnAdd.onclick = setCheckedAllFn((sg) => sg.category == category, true);
 			hdr.append(btnAdd);
 			let btnRemove = document.createElement("span");
 			btnRemove.classList.add("text-button");
 			btnRemove.innerHTML = "(-)";
-			btnRemove.onclick = setCheckedAllFn(false, (sg) => sg.category == category);
+			btnRemove.onclick = setCheckedAllFn((sg) => sg.category == category, false);
 			hdr.append(btnRemove);
 			container.append(hdr);
 			for (let sg of stratagems.filter((v) => v.category == category)) {
