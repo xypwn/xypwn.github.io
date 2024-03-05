@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8" />
+	<title>Stratagem Hero</title>
+	<meta name="viewport" content="width=device-width,initial-scale=1" />
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Kode+Mono:wght@400..700&family=Teko:wght@300..700&display=swap" rel="stylesheet">
+	<style>
+		html {
+			background: #1b1b1b;
+		}
+		#container {
+			width: fit-content;
+			height: fit-content;
+			position: relative;
+			left: 50%;
+			margin-top: 5%;
+			margin-bottom: 5%;
+			transform: translate(-50%, 0);
+			border: 5px solid gray;
+			border-radius: 3px;
+		}
+		#canvas {
+			display: block;
+		}
+		#crt {
+			position: absolute;
+			display: block;
+			content: " ";
+			top: 0;
+			left: 0;
+			bottom: 0;
+			right: 0;
+			background:
+				linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
+				linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+			background-size: 100% 4px;
+			opacity: 0.6;
+			z-index: 2;
+			pointer-events: none;
+			animation: scanlines 1s steps(60) infinite;
+		}
+		@keyframes scanlines {
+			0% {
+				background-position: 0 50%;
+			}
+		}
+		#checkboxes {
+			padding: 10px;
+			font-family: "Kode Mono";
+		}
+		#checkboxes h2 {
+			color: white;
+			font-weight: 700;
+			margin: 10px 0 10px 0;
+		}
+		#checkboxes > div {
+			display: flex;
+			align-items: start;
+		}
+		#checkboxes > div > span {
+			padding-left: 10px;
+		}
+		#checkboxes input[type="checkbox"] {
+			appearance: none;
+		}
+		#checkboxes input[type="checkbox"] ~ label > img {
+			filter: grayscale(0.8);
+			border: 2px solid gray;
+			transition: all 0.1s ease-in-out;
+		}
+		#checkboxes input[type="checkbox"]:checked ~ label > img {
+			filter: none;
+			border: 2px solid #f4bb44;
+		}
+		#checkboxes input[type="checkbox"] ~ span {
+			text-decoration: line-through;
+			color: #eeeeee;
+			transition: all 0.1s ease-in-out;
+		}
+		#checkboxes input[type="checkbox"]:checked ~ span {
+			text-decoration: none;
+			color: #f4bb44;
+		}
+		</style>
+	</head>
+	<body>
+	<div id="container">
+		<canvas id="canvas" width="500" height="200"></canvas>
+		<div id="crt"></div>
+	</div>
+	<div style="display:none">
+		<img id="stratagem-lift-850" src="./assets/stratagems/lift-850.webp">
+		<img id="stratagem-b-1" src="./assets/stratagems/b-1.webp">
+		<img id="stratagem-ax-las-5" src="./assets/stratagems/ax-las-5.webp">
+		<img id="stratagem-sh-20" src="./assets/stratagems/sh-20.webp">
+		<img id="stratagem-sh-32" src="./assets/stratagems/sh-32.webp">
+		<img id="stratagem-ax-ar-23" src="./assets/stratagems/ax-ar-23.webp">
+
+		<img id="stratagem-mg-43" src="./assets/stratagems/mg-43.webp">
+		<img id="stratagem-apw-1" src="./assets/stratagems/apw-1.webp">
+		<img id="stratagem-m-105" src="./assets/stratagems/m-105.webp">
+		<img id="stratagem-eat-17" src="./assets/stratagems/eat-17.webp">
+		<img id="stratagem-gr-8" src="./assets/stratagems/gr-8.webp">
+		<img id="stratagem-flam-40" src="./assets/stratagems/flam-40.webp">
+		<img id="stratagem-ac-8" src="./assets/stratagems/ac-8.webp">
+		<img id="stratagem-rs-422" src="./assets/stratagems/rs-422.webp">
+		<img id="stratagem-faf-14" src="./assets/stratagems/faf-14.webp">
+		<img id="stratagem-gl-21" src="./assets/stratagems/gl-21.webp">
+		<img id="stratagem-las-98" src="./assets/stratagems/las-98.webp">
+		<img id="stratagem-arc-3" src="./assets/stratagems/arc-3.webp">
+
+		<!--<img id="stratagem-resupply" src="./assets/stratagems/resupply.webp">
+		<img id="stratagem-reinforce" src="./assets/stratagems/reinforce.webp">
+		<img id="stratagem-sh-32" src="./assets/stratagems/sh-32.webp">
+		<img id="stratagem-nux-223" src="./assets/stratagems/nux-223.webp">-->
+
+		<img id="arrow-up" src="./assets/up.webp">
+		<img id="arrow-left" src="./assets/left.webp">
+		<img id="arrow-down" src="./assets/down.webp">
+		<img id="arrow-right" src="./assets/right.webp">
+	</div>
+	<div id="checkboxes">
+	</div>
+	<script>
+		const Key = {
+			Up: "Up",
+			Down: "Down",
+			Left: "Left",
+			Right: "Right",
+		};
+		
+		const arrowImgs = new Map([
+			[Key.Up, document.getElementById("arrow-up")],
+			[Key.Left, document.getElementById("arrow-left")],
+			[Key.Down, document.getElementById("arrow-down")],
+			[Key.Right, document.getElementById("arrow-right")],
+		]);
+
+		class Stratagem {
+			constructor(name, stratagemImgId, sequence, category, tags) {
+				this.name = name;
+				this.imgId = "stratagem-"+stratagemImgId;
+				this.img = document.getElementById(this.imgId);
+				this.sequence = [];
+				for (const v of sequence) {
+					switch (v) {
+					case "W":
+						this.sequence.push(Key.Up);
+						break;
+					case "A":
+						this.sequence.push(Key.Left);
+						break;
+					case "S":
+						this.sequence.push(Key.Down);
+						break;
+					case "D":
+						this.sequence.push(Key.Right);
+						break;
+					}
+				}
+				this.category = category;
+				this.tags = tags;
+			}
+		};
+
+		const StratagemCategory = {
+			SupplyBackpack: "Supply Backpacks",
+			SupplyWeapon:   "Supply Weapons",
+		};
+
+		const stratagems = [
+			// https://helldivers.fandom.com/wiki/Stratagem_Codes_(Helldivers_2)
+
+			new Stratagem("LIFT-850 Jump Pack",              "lift-850", "SWWSW",  StratagemCategory.SupplyBackpack, ["supply", "backpack"]),
+			new Stratagem("B-1 Supply Pack",                 "b-1",      "SASWWS", StratagemCategory.SupplyBackpack, ["supply", "backpack"]),
+			new Stratagem("AX/LAS-5 \"Guard Dog\" Rover ",   "ax-las-5", "SWAWDD", StratagemCategory.SupplyBackpack, ["supply", "backpack"]),
+			new Stratagem("SH-20 Ballistic Shield Backpack", "sh-20",    "SASSWA", StratagemCategory.SupplyBackpack, ["supply", "backpack"]),
+			new Stratagem("SH-32 Shield Generator Pack ",    "sh-32",    "SWADAD", StratagemCategory.SupplyBackpack, ["supply", "backpack"]),
+			new Stratagem("AX/AR-23 \"Guard Dog\"",          "ax-ar-23", "SWAWDS", StratagemCategory.SupplyBackpack, ["supply", "backpack"]),
+
+			new Stratagem("MG-43 Machine Gun",           "mg-43",   "SASWD",  StratagemCategory.SupplyWeapon, ["supply", "weapon"]),
+			new Stratagem("APW-1 Anti-Materiel Rifle",   "apw-1",   "SADWS",  StratagemCategory.SupplyWeapon, ["supply", "weapon"]),
+			new Stratagem("M-105 Stalwart",              "m-105",   "SASWWA", StratagemCategory.SupplyWeapon, ["supply", "weapon"]),
+			new Stratagem("EAT-17 Expendable Anti-Tank", "eat-17",  "SWAWDS", StratagemCategory.SupplyWeapon, ["supply", "weapon"]),
+			new Stratagem("GR-8 Recoilless Rifle",       "gr-8",    "SADDA",  StratagemCategory.SupplyWeapon, ["supply", "weapon"]),
+			new Stratagem("FLAM-40 Flamethrower",        "flam-40", "SAWSW",  StratagemCategory.SupplyWeapon, ["supply", "weapon"]),
+			new Stratagem("AC-8 Autocannon",             "ac-8",    "SASWWD", StratagemCategory.SupplyWeapon, ["supply", "weapon"]),
+			new Stratagem("RS-422 Railgun",              "rs-422",  "SDSWAD", StratagemCategory.SupplyWeapon, ["supply", "weapon"]),
+			new Stratagem("FAF-14 SPEAR Launcher",       "faf-14",  "SSWSS",  StratagemCategory.SupplyWeapon, ["supply", "weapon"]),
+			new Stratagem("GL-21 Grenade Launcher",      "gl-21",   "SAWAS",  StratagemCategory.SupplyWeapon, ["supply", "weapon"]),
+			new Stratagem("LAS-98 Laser Cannon",         "las-98",  "SASWA",  StratagemCategory.SupplyWeapon, ["supply", "weapon"]),
+			new Stratagem("ARC-3 Arc Thrower",           "arc-3",   "SDSWAA", StratagemCategory.SupplyWeapon, ["supply", "weapon"]),
+
+			/*new Stratagem("resupply", "resupply", "SSWD"),
+			new Stratagem("reinforce", "reinforce", "WSDAW"),
+			new Stratagem("nux-223 hellbomb", "nux-223", "SWASWDSW"),
+			new Stratagem("sh-32 shield generator pack", "sh-32", "SWADAD"),
+			new Stratagem("rs-422 railgun", "rs-422", "SDSWAD"),*/
+
+		];
+		
+		function millis() {
+			return window.performance.now();
+		}
+		
+		const checkboxes = document.getElementById("checkboxes");
+		let stratagemId = 0;
+		for (let category of Object.values(StratagemCategory)) {
+			let hdr = document.createElement("h2");
+			hdr.innerHTML = category;
+			checkboxes.append(hdr);
+			for (let sg of stratagems.filter((v) => v.category == category)) {
+				let id = "check-stratagem-"+stratagemId.toString()
+				
+				let div = document.createElement("div");
+
+				let input = document.createElement("input");
+				input.type = "checkbox";
+				input.id = id;
+				input.checked = true;
+				div.append(input);
+
+				let image = document.createElement("img");
+				image.alt = sg.name;
+				image.src =  document.getElementById(sg.imgId).src;
+				image.width = 30;
+				image.height = 30;
+
+				let label = document.createElement("label");
+				label.htmlFor = id;
+				label.classList.add("checkimg");
+				label.append(image);
+				div.append(label);
+
+				let span = document.createElement("span");
+				span.innerHTML = sg.name;
+
+				div.append(span);
+
+				div.append(document.createElement("br"));
+
+				checkboxes.append(div);
+				
+				stratagemId++;
+			}
+		}
+
+		const cnv = document.getElementById("canvas");
+		const ctx = cnv.getContext("2d");
+		
+		const colorAccent = "#f4bb44";
+		const font = "Teko";
+		
+		class MainMenu {
+			constructor() {
+			}
+			draw() {
+				ctx.fillStyle = "#ffffff";
+				ctx.font = "bold 40px "+font;
+				ctx.textAlign = "center";
+				ctx.textBaseline = "center";
+				ctx.fillText("STRATAGEM HERO", 0.5*cnv.width, 0.5*cnv.height);
+				ctx.fillStyle = colorAccent;				
+				ctx.font = "bold 20px "+font;
+				ctx.fillText("Enter any Stratagem Input to Start!", 0.5*cnv.width, 0.8*cnv.height);
+			}
+			onKey(key) {
+				for (let i = 0; i < stratagems.length; i++)
+					document.getElementById("check-stratagem-"+i.toString()).disabled = true;
+				logic = new Countdown();
+			}
+		};
+		
+		class Countdown {
+			constructor() {
+				this.tStart = millis();
+			}
+			draw() {
+				let countdown = 3 - Math.floor((millis() - this.tStart) / 1000);
+				ctx.fillStyle = colorAccent;
+				ctx.font = "bold 40px "+font;
+				ctx.textAlign = "center";
+				ctx.textBaseline = "center";
+				ctx.fillText(countdown.toString(), 0.5*cnv.width, 0.55*cnv.height);
+				if (countdown == 0)
+					logic = new Game();
+			}
+			onKey(key) {
+			}
+		};
+		
+		class Game {
+			constructor() {
+				this.tTimerStart = millis();
+				this.queue = [];
+				this.refillQueue();
+				this.sequenceProgress = 0;
+			}
+			refillQueue() {
+				let avail = stratagems.filter((v, i) => document.getElementById("check-stratagem-"+i.toString()).checked);
+				for (let i = 0; i < 6; i++) {
+					let randIdx = Math.floor(Math.random() * avail.length);
+					this.queue.push(avail[randIdx]);
+				}
+			}
+			draw() {
+				let timerProg = (millis() - this.tTimerStart) / 1e4;
+				
+				if (timerProg >= 1)
+					logic = new GameOver();
+
+				let x = 0.5*cnv.width - (40*this.queue.length+15)/2;
+				let y = 0.1*cnv.height;
+				for (let i = 0; i < this.queue.length; i++) {
+					let size = i == 0 ? 50 : 40;
+					ctx.drawImage(this.queue[i].img, x, y + (i == 0 ? 0 : 5), size, size);
+					if (i == 0) {
+						ctx.strokeStyle = colorAccent;
+						ctx.lineWidth = 2;
+						ctx.beginPath();
+						ctx.rect(x, y, size, size);
+						ctx.stroke();
+					}
+					x += size;
+					if (i == 0)
+						x += 5;
+				}
+				y += 50;
+
+				ctx.fillRect(0.2*cnv.width, y, 0.6*cnv.width, 20);
+
+				if (this.queue.length >= 1) {
+					let item = this.queue[0];
+					ctx.fillStyle = "#000000";
+					ctx.font = "bold 20px "+font;
+					ctx.textAlign = "center";
+					ctx.textBaseline = "top";
+					ctx.fillText(item.name.toUpperCase(), 0.5*cnv.width, y + 3);
+				}
+				y += 20 + 2;
+				if (this.queue.length >= 1) {
+					let item = this.queue[0];
+					let x = 0.5*cnv.width - 30*item.sequence.length/2;
+					for (let i = 0; i < item.sequence.length; i++) {
+						if (i < this.sequenceProgress)
+							ctx.filter = "brightness(2)";
+						ctx.drawImage(arrowImgs.get(item.sequence[i]), x, y, 30, 30);
+						ctx.filter = "none";
+						x += 30;
+					}
+				}
+				y += 30 + 2 + 15;
+
+				ctx.fillStyle = "#444444";
+				ctx.fillRect(0.2*cnv.width, y, 0.6*cnv.width, 15);
+				ctx.fillStyle = colorAccent;
+				ctx.fillRect(0.2*cnv.width, y, 0.6*cnv.width*timerProg, 15);
+
+			}
+			onKey(key) {
+				if (this.queue.length == 0)
+					return;
+				let item = this.queue[0];
+				if (key == item.sequence[this.sequenceProgress])
+					this.sequenceProgress++;
+				else
+					this.sequenceProgress = 0;
+				if (this.sequenceProgress >= item.sequence.length) {
+					this.queue.shift();
+					this.sequenceProgress = 0;
+				}
+			}
+		};
+		
+		class GameOver {
+			constructor() {
+			}
+			draw() {
+				ctx.fillStyle = colorAccent;
+				ctx.font = "bold 50px "+font;
+				ctx.textAlign = "center";
+				ctx.textBaseline = "center";
+				ctx.fillText("Game Over", 0.5*cnv.width, 0.5*cnv.height);
+			}
+			onKey(key) {
+				
+			}
+		};
+
+		let logic = new MainMenu();
+
+		function onKeyEvt(evt) {
+			let key;
+			switch (evt.keyCode) {
+			case 87:
+			case 38:
+				key = Key.Up;
+				break;
+			case 65:
+			case 37:
+				key = Key.Left;
+				break;
+			case 83:
+			case 40:
+				key = Key.Down;
+				break;
+			case 68:
+			case 39:
+				key = Key.Right;
+				break;
+			default:
+				return;
+			}
+			logic.onKey(key);
+		}
+		window.addEventListener("keydown", onKeyEvt);
+
+		function draw() {
+			requestAnimationFrame(draw);
+			ctx.clearRect(0, 0, cnv.width, cnv.height);
+
+			logic.draw();
+		}
+		window.addEventListener("load", draw);
+	</script>
+</body>
+</html>
