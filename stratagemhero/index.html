@@ -115,6 +115,41 @@
 			text-decoration: none;
 			color: var(--accent);
 		}
+		.tooltip {
+			position: relative;
+		}
+		.tooltip .tooltip-content {
+			display: flex;
+			align-items: center;
+			visibility: hidden;
+			white-space: nowrap;
+			background: #555;
+			border-radius: 5px;
+			position: absolute;
+			z-index: 1;
+			bottom: 125%;
+			left: 10px;
+			padding: 5px;
+
+			opacity: 0;
+			transition: opacity 0.3s;
+		}
+		.tooltip .tooltip-content:after {
+			content: "";
+			position: absolute;
+			top: 100%;
+			left: 50%;
+			transform: translate(-50%, 0);
+			width: 0;
+			height: 0;
+			border: 5px solid transparent;
+			border-top: 10px solid #555;
+			border-bottom: 0;
+		}
+		.tooltip:hover .tooltip-content {
+			visibility: visible;
+			opacity: 1;
+		}
 		</style>
 	</head>
 	<body>
@@ -392,8 +427,22 @@
 				label.append(image);
 				div.append(label);
 
+				let info = document.createElement("span");
+				info.classList.add("tooltip-content");
+				for (let v of sg.sequence) {
+					let htmlImg = arrowImgs.get(v);
+					let img = document.createElement("img");
+					img.alt = htmlImg.id;
+					img.src = htmlImg.src;
+					img.width = 20;
+					img.height = 20;
+					info.append(img);
+				}
+
 				let span = document.createElement("span");
+				span.classList.add("tooltip");
 				span.innerHTML = sg.name;
+				span.append(info);
 
 				div.append(span);
 
