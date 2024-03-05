@@ -8,8 +8,12 @@
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link href="https://fonts.googleapis.com/css2?family=Kode+Mono:wght@400..700&family=Teko:wght@300..700&display=swap" rel="stylesheet">
 	<style>
+		:root {
+			--bg: #1b1b1b;
+			--accent: #f4bb44;
+		}
 		html {
-			background: #1b1b1b;
+			background: var(--bg);
 		}
 		#container {
 			width: fit-content;
@@ -73,7 +77,7 @@
 		}
 		#checkboxes input[type="checkbox"]:checked ~ label > img {
 			filter: none;
-			border: 2px solid #f4bb44;
+			border: 2px solid var(--accent);
 		}
 		#checkboxes input[type="checkbox"] ~ span {
 			text-decoration: line-through;
@@ -82,7 +86,7 @@
 		}
 		#checkboxes input[type="checkbox"]:checked ~ span {
 			text-decoration: none;
-			color: #f4bb44;
+			color: var(--accent);
 		}
 		</style>
 	</head>
@@ -138,6 +142,23 @@
 			[Key.Down, document.getElementById("arrow-down")],
 			[Key.Right, document.getElementById("arrow-right")],
 		]);
+
+		const tintedArrowImgs = new Map();
+		window.addEventListener("load", function() {
+			for (let [k, v] of arrowImgs) {
+				let buf = document.createElement("canvas");
+				buf.width = v.width;
+				buf.height = v.height;
+				let bc = buf.getContext("2d");
+				bc.drawImage(v, 0, 0);
+				bc.globalCompositeOperation = "multiply";
+				bc.fillStyle = "#f00";
+				bc.fillRect(0, 0, buf.width, buf.height);
+				bc.globalCompositeOperation = "destination-in";
+				bc.drawImage(v, 0, 0);
+				tintedArrowImgs.set(k, buf);
+			}
+		});
 
 		class Stratagem {
 			constructor(name, stratagemImgId, sequence, category, tags) {
@@ -214,7 +235,6 @@
 			checkboxes.append(hdr);
 			for (let sg of stratagems.filter((v) => v.category == category)) {
 				let id = "check-stratagem-"+stratagemId.toString()
-				
 				let div = document.createElement("div");
 
 				let input = document.createElement("input");
@@ -243,7 +263,7 @@
 				div.append(document.createElement("br"));
 
 				checkboxes.append(div);
-				
+
 				stratagemId++;
 			}
 		}
@@ -251,9 +271,56 @@
 		const cnv = document.getElementById("canvas");
 		const ctx = cnv.getContext("2d");
 		
-		const colorAccent = "#f4bb44";
+		const colorAccent = getComputedStyle(document.body).getPropertyValue("--accent");
 		const font = "Teko";
+		const font2 = "Kode Mono";
 		
+		const Easing = {
+			// https://easings.net
+
+			linear: function(x) {
+				return x;
+			},
+			easeOutExp: function(x) {
+				return x === 1 ? 1 : 1 - Math.pow(2, -10 * x);
+			},
+		};
+
+		class Animation {
+			constructor(beginValue, endValue, restingValue, duration, loop = false, map = Easing.linear) {
+				this.beginValue = beginValue;
+				this.endValue = endValue;
+				this.restingValue = restingValue;
+				this.duration = duration;
+				this.active = false;
+				this.loop = this.loop;
+				this.tStart = 0;
+				this.map = map;
+			}
+
+			start() {
+				this.tStart = millis();
+				this.active = true;
+			}
+
+			value() {
+				if (!this.active) {
+					return this.restingValue;
+				}
+				let phase = (millis() - this.tStart) / this.duration;
+				if (phase >= 1) {
+					if (this.loop) {
+						tStart = millis();
+						phase %= 1;
+					} else {
+						this.active = false;
+						return this.restingValue;
+					}
+				}
+				return this.beginValue + this.map(Math.min(phase, 1)) * (this.endValue - this.beginValue);
+			}
+		}
+
 		class MainMenu {
 			constructor() {
 			}
@@ -270,56 +337,63 @@
 			onKey(key) {
 				for (let i = 0; i < stratagems.length; i++)
 					document.getElementById("check-stratagem-"+i.toString()).disabled = true;
-				logic = new Countdown();
+				logic = new Game();
 			}
 		};
-		
-		class Countdown {
-			constructor() {
-				this.tStart = millis();
-			}
-			draw() {
-				let countdown = 3 - Math.floor((millis() - this.tStart) / 1000);
-				ctx.fillStyle = colorAccent;
-				ctx.font = "bold 40px "+font;
-				ctx.textAlign = "center";
-				ctx.textBaseline = "center";
-				ctx.fillText(countdown.toString(), 0.5*cnv.width, 0.55*cnv.height);
-				if (countdown == 0)
-					logic = new Game();
-			}
-			onKey(key) {
-			}
-		};
-		
+
 		class Game {
 			constructor() {
-				this.tTimerStart = millis();
-				this.queue = [];
-				this.refillQueue();
-				this.sequenceProgress = 0;
+				this.score = 0;
+				this.round = 1;
+				this.startGetReady();
 			}
-			refillQueue() {
+			startRound() {
+				this.getReady = false;
+				this.tStart = millis();
+				this.animArrow = new Animation(0, 2, 0, 100);
+				this.animShake = new Animation(-5, 5, 0, 100, false, (v) => 0.5+0.5*Math.sin(20*v/Math.PI));
+				this.animShakeArrowIndex = 0;
+				this.bonusTime = 0;
+				this.queue = [];
+				this.sequenceProgress = 0;
 				let avail = stratagems.filter((v, i) => document.getElementById("check-stratagem-"+i.toString()).checked);
 				for (let i = 0; i < 6; i++) {
 					let randIdx = Math.floor(Math.random() * avail.length);
 					this.queue.push(avail[randIdx]);
 				}
 			}
-			draw() {
-				let timerProg = (millis() - this.tTimerStart) / 1e4;
+			startGetReady() {
+				this.getReady = true;
+				this.tStart = millis();
+			}
+			drawGame() {
+				if (!this.animArrow.active && this.queue.length > 0 && this.sequenceProgress >= this.queue[0].sequence.length) {
+					this.queue.shift();
+					this.sequenceProgress = 0;
+					this.bonusTime += 1;
+					this.score += 30;
+				}			
+
+				if (this.queue.length == 0) {
+					this.round++;
+					this.startGetReady();
+				}
+
+				let timerTime = (millis() - this.tStart) / 1000 - this.bonusTime;
+				let timerProg = timerTime / 10;
+				timerProg = Math.min(Math.max(timerProg, 0), 1);
 				
 				if (timerProg >= 1)
-					logic = new GameOver();
+					logic = new GameOver(this.score);
 
+				ctx.strokeStyle = colorAccent;
+				ctx.lineWidth = 2;
 				let x = 0.5*cnv.width - (40*this.queue.length+15)/2;
 				let y = 0.1*cnv.height;
 				for (let i = 0; i < this.queue.length; i++) {
 					let size = i == 0 ? 50 : 40;
 					ctx.drawImage(this.queue[i].img, x, y + (i == 0 ? 0 : 5), size, size);
 					if (i == 0) {
-						ctx.strokeStyle = colorAccent;
-						ctx.lineWidth = 2;
 						ctx.beginPath();
 						ctx.rect(x, y, size, size);
 						ctx.stroke();
@@ -330,14 +404,15 @@
 				}
 				y += 50;
 
+				ctx.fillStyle = colorAccent;
 				ctx.fillRect(0.2*cnv.width, y, 0.6*cnv.width, 20);
-
+				
+				ctx.fillStyle = "#222";
+				ctx.font = "bold 20px "+font;
+				ctx.textAlign = "center";
+				ctx.textBaseline = "top";
 				if (this.queue.length >= 1) {
 					let item = this.queue[0];
-					ctx.fillStyle = "#000000";
-					ctx.font = "bold 20px "+font;
-					ctx.textAlign = "center";
-					ctx.textBaseline = "top";
 					ctx.fillText(item.name.toUpperCase(), 0.5*cnv.width, y + 3);
 				}
 				y += 20 + 2;
@@ -346,47 +421,122 @@
 					let x = 0.5*cnv.width - 30*item.sequence.length/2;
 					for (let i = 0; i < item.sequence.length; i++) {
 						if (i < this.sequenceProgress)
-							ctx.filter = "brightness(2)";
-						ctx.drawImage(arrowImgs.get(item.sequence[i]), x, y, 30, 30);
+							ctx.filter = "brightness(3)";
+						let addSize = 0;
+						let shakeOffset = 0;
+						let arrowImg = arrowImgs.get(item.sequence[i]);
+						if (i == this.sequenceProgress-1) {
+							addSize = this.animArrow.value();
+						}
+						if (i == this.animShakeArrowIndex) {
+							shakeOffset = this.animShake.value();
+							if (this.animShake.active)
+								arrowImg = tintedArrowImgs.get(item.sequence[i]);
+						}
+						ctx.drawImage(arrowImg, shakeOffset+x-addSize/2, shakeOffset+y-addSize/2, 30+addSize, 30+addSize);
 						ctx.filter = "none";
 						x += 30;
 					}
 				}
 				y += 30 + 2 + 15;
 
-				ctx.fillStyle = "#444444";
+				ctx.fillStyle = "#444";
 				ctx.fillRect(0.2*cnv.width, y, 0.6*cnv.width, 15);
 				ctx.fillStyle = colorAccent;
-				ctx.fillRect(0.2*cnv.width, y, 0.6*cnv.width*timerProg, 15);
+				ctx.fillRect(0.2*cnv.width, y, 0.6*cnv.width*(1-timerProg), 15);
 
+				ctx.textAlign = "left";
+				y = 0.15*cnv.height;
+				ctx.fillStyle = "#fff";
+				ctx.font = "bold 15px "+font2;
+				ctx.textBaseline = "center";
+				ctx.fillText("Round", 0.05*cnv.width, y);
+				y += 20;
+				ctx.fillStyle = colorAccent;
+				ctx.font = "bold 20px "+font2;
+				ctx.fillText(this.round, 0.05*cnv.width, y);
+
+				ctx.textAlign = "right";
+				y = 0.15*cnv.height;
+				ctx.fillStyle = colorAccent;
+				ctx.font = "bold 20px "+font2;
+				ctx.fillText(this.score, 0.95*cnv.width, y);
+				y += 25;
+				ctx.fillStyle = "#fff";
+				ctx.font = "bold 15px "+font2;
+				ctx.textBaseline = "center";
+				ctx.fillText("Score", 0.95*cnv.width, y);
+			}
+			drawGetReady() {
+				ctx.fillStyle = colorAccent;
+				ctx.font = "bold 40px "+font;
+				ctx.textAlign = "center";
+				ctx.textBaseline = "center";
+				ctx.fillText("GET READY", 0.5*cnv.width, 0.55*cnv.height);
+				ctx.font = "bold 20px "+font;
+				ctx.fillText("Round "+this.round.toString(), 0.5*cnv.width, 0.7*cnv.height);
+				if (millis() - this.tStart >= 2000)
+					this.startRound();
+			}
+			draw() {
+				if (this.getReady)
+					this.drawGetReady();
+				else
+					this.drawGame();
 			}
 			onKey(key) {
 				if (this.queue.length == 0)
 					return;
 				let item = this.queue[0];
-				if (key == item.sequence[this.sequenceProgress])
+				if (key == item.sequence[this.sequenceProgress]) {
+					this.animArrow.start();
 					this.sequenceProgress++;
-				else
-					this.sequenceProgress = 0;
-				if (this.sequenceProgress >= item.sequence.length) {
-					this.queue.shift();
+				} else {
+					this.animShake.start();
+					this.animShakeArrowIndex = this.sequenceProgress;
 					this.sequenceProgress = 0;
 				}
 			}
 		};
-		
+
 		class GameOver {
-			constructor() {
+			constructor(score) {
+				this.tStart = millis();
+				this.score = score;
+				this.animScore = new Animation(0, score, score, 1700, false, Easing.easeOutExp);
+				this.animScore.start();
+				this.animText = new Animation(0, 1, 1, 1500);
+				this.animTextStarted = false;
 			}
 			draw() {
+				let y = 0.3*cnv.height;
 				ctx.fillStyle = colorAccent;
 				ctx.font = "bold 50px "+font;
 				ctx.textAlign = "center";
-				ctx.textBaseline = "center";
-				ctx.fillText("Game Over", 0.5*cnv.width, 0.5*cnv.height);
+				ctx.fillText("Game Over", 0.5*cnv.width, y);
+				y += 50;
+				ctx.font = "bold 30px "+font;
+				ctx.textAlign = "left";
+				let finalScoreStr = "Score: "+this.score;
+				let finalScoreStrWidth = ctx.measureText(finalScoreStr).width;
+				ctx.fillText("Score: "+Math.floor(this.animScore.value()).toString(), 0.5*cnv.width - finalScoreStrWidth/2, y);
+				y += 40;
+				if (!this.animTextStarted && millis() - this.tStart >= 2000) {
+					this.animText.start();
+					this.animTextStarted = true;
+				}
+				if (this.animTextStarted) {
+					ctx.fillStyle = "#fff";
+					ctx.font = "bold 20px "+font;
+					let text = "Enter any Stratagem Input to Restart.";
+					let textWidth = ctx.measureText(text).width;
+					let textLen = Math.floor(this.animText.value() * text.length);
+					ctx.fillText(text.substr(0, textLen), 0.5*cnv.width - textWidth/2, y);
+				}
 			}
 			onKey(key) {
-				
+				if (millis() - this.tStart >= 2000)
+					logic = new Game();
 			}
 		};
 
@@ -415,16 +565,18 @@
 				return;
 			}
 			logic.onKey(key);
+			evt.preventDefault();
 		}
 		window.addEventListener("keydown", onKeyEvt);
 
 		function draw() {
 			requestAnimationFrame(draw);
-			ctx.clearRect(0, 0, cnv.width, cnv.height);
+			ctx.reset();
 
 			logic.draw();
 		}
 		window.addEventListener("load", draw);
+		
 	</script>
 </body>
 </html>
