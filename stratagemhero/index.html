@@ -52,19 +52,23 @@
 			}
 		}
 		#checkboxes {
-			padding: 10px;
+			display: grid;
+			grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+			grid-column-gap: 10px;
+			grid-row-gap: 10px;
 			font-family: "Kode Mono";
+			margin: 0 20px 0 20px;
 		}
-		#checkboxes h2 {
+		#checkboxes div.category > h2 {
 			color: white;
 			font-weight: 700;
 			margin: 10px 0 10px 0;
 		}
-		#checkboxes > div {
+		#checkboxes div.item {
 			display: flex;
 			align-items: start;
 		}
-		#checkboxes > div > span {
+		#checkboxes div.item > span {
 			padding-left: 10px;
 		}
 		#checkboxes input[type="checkbox"] {
@@ -116,10 +120,47 @@
 		<img id="stratagem-las-98" src="./assets/stratagems/las-98.webp">
 		<img id="stratagem-arc-3" src="./assets/stratagems/arc-3.webp">
 
-		<!--<img id="stratagem-resupply" src="./assets/stratagems/resupply.webp">
 		<img id="stratagem-reinforce" src="./assets/stratagems/reinforce.webp">
-		<img id="stratagem-sh-32" src="./assets/stratagems/sh-32.webp">
-		<img id="stratagem-nux-223" src="./assets/stratagems/nux-223.webp">-->
+		<img id="stratagem-sos" src="./assets/stratagems/sos.webp">
+		<img id="stratagem-resupply" src="./assets/stratagems/resupply.webp">
+		<img id="stratagem-nux-223" src="./assets/stratagems/nux-223.webp">
+		<img id="stratagem-sssd" src="./assets/stratagems/sssd.webp">
+		<img id="stratagem-seismic-probe" src="./assets/stratagems/seismic-probe.webp">
+		<img id="stratagem-upload-data" src="./assets/stratagems/upload-data.webp">
+		<img id="stratagem-eagle-rearm" src="./assets/stratagems/eagle-rearm.webp">
+		<!--<img id="stratagem-illumination-flare" src="./assets/stratagems/illumination-flare.webp">-->
+
+		<img id="stratagem-e-mg-101" src="./assets/stratagems/e-mg-101.webp">
+		<img id="stratagem-fx-12" src="./assets/stratagems/fx-12.webp">
+		<img id="stratagem-a-arc-3" src="./assets/stratagems/a-arc-3.webp">
+		<img id="stratagem-md-6" src="./assets/stratagems/md-6.webp">
+		<img id="stratagem-md-14" src="./assets/stratagems/md-14.webp">
+		<img id="stratagem-a-mg-43" src="./assets/stratagems/a-mg-43.webp">
+		<img id="stratagem-a-g-16" src="./assets/stratagems/a-g-16.webp">
+		<img id="stratagem-a-m-12" src="./assets/stratagems/a-m-12.webp">
+		<img id="stratagem-a-ac-8" src="./assets/stratagems/a-ac-8.webp">
+		<img id="stratagem-a-mls-4x" src="./assets/stratagems/a-mls-4x.webp">
+		<img id="stratagem-a-m-23" src="./assets/stratagems/a-m-23.webp">
+
+		<img id="stratagem-orbital-gatling" src="./assets/stratagems/orbital-gatling.webp">
+		<img id="stratagem-orbital-airburst" src="./assets/stratagems/orbital-airburst.webp">
+		<img id="stratagem-orbital-120mm" src="./assets/stratagems/orbital-120mm.webp">
+		<img id="stratagem-orbital-380mm" src="./assets/stratagems/orbital-380mm.webp">
+		<img id="stratagem-orbital-walking" src="./assets/stratagems/orbital-walking.webp">
+		<img id="stratagem-orbital-laser" src="./assets/stratagems/orbital-laser.webp">
+		<img id="stratagem-orbital-railcannon" src="./assets/stratagems/orbital-railcannon.webp">
+		<img id="stratagem-orbital-precision" src="./assets/stratagems/orbital-precision.webp">
+		<img id="stratagem-orbital-gas" src="./assets/stratagems/orbital-gas.webp">
+		<img id="stratagem-orbital-ems" src="./assets/stratagems/orbital-ems.webp">
+		<img id="stratagem-orbital-smoke" src="./assets/stratagems/orbital-smoke.webp">
+
+		<img id="stratagem-eagle-strafing" src="./assets/stratagems/eagle-strafing.webp">
+		<img id="stratagem-eagle-airstrike" src="./assets/stratagems/eagle-airstrike.webp">
+		<img id="stratagem-eagle-cluster" src="./assets/stratagems/eagle-cluster.webp">
+		<img id="stratagem-eagle-napalm" src="./assets/stratagems/eagle-napalm.webp">
+		<img id="stratagem-eagle-smoke" src="./assets/stratagems/eagle-smoke.webp">
+		<img id="stratagem-eagle-110mm" src="./assets/stratagems/eagle-110mm.webp">
+		<img id="stratagem-eagle-500kg" src="./assets/stratagems/eagle-500kg.webp">
 
 		<img id="arrow-up" src="./assets/up.webp">
 		<img id="arrow-left" src="./assets/left.webp">
@@ -188,8 +229,12 @@
 		};
 
 		const StratagemCategory = {
-			SupplyBackpack: "Supply Backpacks",
-			SupplyWeapon:   "Supply Weapons",
+			SupplyBackpack:   "Supply Backpacks",
+			SupplyWeapon:     "Supply Weapons",
+			Mission:          "Mission Stratagems",
+			Defensive:        "Defensive",
+			OffensiveOrbital: "Offensive Orbitals",
+			OffensiveEagle:   "Offensive Eagle",
 		};
 
 		const stratagems = [
@@ -215,12 +260,47 @@
 			new Stratagem("LAS-98 Laser Cannon",         "las-98",  "SASWA",  StratagemCategory.SupplyWeapon, ["supply", "weapon"]),
 			new Stratagem("ARC-3 Arc Thrower",           "arc-3",   "SDSWAA", StratagemCategory.SupplyWeapon, ["supply", "weapon"]),
 
-			/*new Stratagem("resupply", "resupply", "SSWD"),
-			new Stratagem("reinforce", "reinforce", "WSDAW"),
-			new Stratagem("nux-223 hellbomb", "nux-223", "SWASWDSW"),
-			new Stratagem("sh-32 shield generator pack", "sh-32", "SWADAD"),
-			new Stratagem("rs-422 railgun", "rs-422", "SDSWAD"),*/
+			new Stratagem("Reinforce",           "reinforce",          "WSDAW",    StratagemCategory.Mission, ["mission"]),
+			new Stratagem("SOS Beacon",          "sos",                "WSDW",     StratagemCategory.Mission, ["mission"]),
+			new Stratagem("Resupply",            "resupply",           "SSWD",     StratagemCategory.Mission, ["mission"]),
+			new Stratagem("NUX-223 Hellbomb",    "nux-223",            "SWASWDSW", StratagemCategory.Mission, ["mission"]),
+			new Stratagem("SSSD Delivery",       "sssd",               "SSSWW",    StratagemCategory.Mission, ["mission"]),
+			new Stratagem("Seismic Probe" ,      "seismic-probe",      "WWADSS",   StratagemCategory.Mission, ["mission"]),
+			new Stratagem("Upload Data",         "upload-data",        "SSWWW",    StratagemCategory.Mission, ["mission"]),
+			new Stratagem("Eagle Rearm",         "eagle-rearm",        "WWAWD",    StratagemCategory.Mission, ["mission"]),
+			//new Stratagem("Illumination Flare",  "illumination-flare", "DDAA",     StratagemCategory.Mission, ["mission"]),
 
+			new Stratagem("E/MG-101 HMG Emplacement",      "e-mg-101", "SWADDA", StratagemCategory.Defensive, ["defense"]),
+			new Stratagem("FX-12 Shield Generator Relay",  "fx-12",    "SSADAD", StratagemCategory.Defensive, ["defense"]),
+			new Stratagem("A/ARC-3 Tesla Tower",           "a-arc-3",  "SWDWAD", StratagemCategory.Defensive, ["defense"]),
+			new Stratagem("MD-6 Anti-Personnel Minefield", "md-6",     "SAWD",   StratagemCategory.Defensive, ["defense"]),
+			new Stratagem("MD-I4 Incendiary Mines",        "md-14",    "SAAS",   StratagemCategory.Defensive, ["defense"]),
+			new Stratagem("A/MG-43 Machine Gun Sentry",    "a-mg-43",  "SWDDW",  StratagemCategory.Defensive, ["defense"]),
+			new Stratagem("A/G-16 Gatling Sentry",         "a-g-16",   "SWDA",   StratagemCategory.Defensive, ["defense"]),
+			new Stratagem("A/M-12 Mortar Sentry",          "a-m-12",   "SWDDS",  StratagemCategory.Defensive, ["defense"]),
+			new Stratagem("A/AC-8 Autocannon Sentry",      "a-ac-8",   "SWDWAW", StratagemCategory.Defensive, ["defense"]),
+			new Stratagem("A/MLS-4X Rocket Sentry",        "a-mls-4x", "SWDDA",  StratagemCategory.Defensive, ["defense"]),
+			new Stratagem("A/M-23 EMS Mortar Sentry",      "a-m-23",   "SWDSD",  StratagemCategory.Defensive, ["defense"]),
+
+			new Stratagem("Orbital Gatling Barrage",   "orbital-gatling",    "DSAWW",   StratagemCategory.OffensiveOrbital, ["offense", "orbital"]),
+			new Stratagem("Orbital Airburst Strike",   "orbital-airburst",   "DDD",     StratagemCategory.OffensiveOrbital, ["offense", "orbital"]),
+			new Stratagem("Orbital 120MM HE Barrage",  "orbital-120mm",      "DDSADS",  StratagemCategory.OffensiveOrbital, ["offense", "orbital"]),
+			new Stratagem("Orbital 380MM HE Barrage",  "orbital-380mm",      "DSWWASS", StratagemCategory.OffensiveOrbital, ["offense", "orbital"]),
+			new Stratagem("Orbital Walking Barrage",   "orbital-walking",    "DSDSDS",  StratagemCategory.OffensiveOrbital, ["offense", "orbital"]),
+			new Stratagem("Orbital Laser",             "orbital-laser",      "DSWDS",   StratagemCategory.OffensiveOrbital, ["offense", "orbital"]),
+			new Stratagem("Orbital Railcannon Strike", "orbital-railcannon", "DWSSD",   StratagemCategory.OffensiveOrbital, ["offense", "orbital"]),
+			new Stratagem("Orbital Precision Strike",  "orbital-precision",  "DDW",     StratagemCategory.OffensiveOrbital, ["offense", "orbital"]),
+			new Stratagem("Orbital Gas Strike",        "orbital-gas",        "DDSD",    StratagemCategory.OffensiveOrbital, ["offense", "orbital"]),
+			new Stratagem("Orbital EMS Strike",        "orbital-ems",        "DDAS",    StratagemCategory.OffensiveOrbital, ["offense", "orbital"]),
+			new Stratagem("Orbital Smoke Strike",      "orbital-smoke",      "DDSW",    StratagemCategory.OffensiveOrbital, ["offense", "orbital"]),
+
+			new Stratagem("Eagle Strafing Run",      "eagle-strafing",   "WDD",   StratagemCategory.OffensiveEagle, ["offense", "eagle"]),
+			new Stratagem("Eagle Airstrike",         "eagle-airstrike",  "WDSD",  StratagemCategory.OffensiveEagle, ["offense", "eagle"]),
+			new Stratagem("Eagle Cluster Bomb",      "eagle-cluster",    "WDSSD", StratagemCategory.OffensiveEagle, ["offense", "eagle"]),
+			new Stratagem("Eagle Napalm Airstrike",  "eagle-napalm",     "WDSW",  StratagemCategory.OffensiveEagle, ["offense", "eagle"]),
+			new Stratagem("Eagle Smoke Strike",      "eagle-smoke",      "WDWS",  StratagemCategory.OffensiveEagle, ["offense", "eagle"]),
+			new Stratagem("Eagle 110MM Rocket Pods", "eagle-110mm",      "WDWA",  StratagemCategory.OffensiveEagle, ["offense", "eagle"]),
+			new Stratagem("Eagle 500kg Bomb ",       "eagle-500kg",      "WDSSS", StratagemCategory.OffensiveEagle, ["offense", "eagle"]),
 		];
 		
 		function millis() {
@@ -230,12 +310,15 @@
 		const checkboxes = document.getElementById("checkboxes");
 		let stratagemId = 0;
 		for (let category of Object.values(StratagemCategory)) {
+			let container = document.createElement("div");
+			container.classList.add("category");
 			let hdr = document.createElement("h2");
 			hdr.innerHTML = category;
-			checkboxes.append(hdr);
+			container.append(hdr);
 			for (let sg of stratagems.filter((v) => v.category == category)) {
 				let id = "check-stratagem-"+stratagemId.toString()
 				let div = document.createElement("div");
+				div.classList.add("item");
 
 				let input = document.createElement("input");
 				input.type = "checkbox";
@@ -262,10 +345,11 @@
 
 				div.append(document.createElement("br"));
 
-				checkboxes.append(div);
+				container.append(div);
 
 				stratagemId++;
 			}
+			checkboxes.append(container);
 		}
 
 		const cnv = document.getElementById("canvas");
