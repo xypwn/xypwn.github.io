@@ -1,0 +1,154 @@
+@font-face { font-family: LoveLetter; src: url('/fonts/LoveLetter.ttf'); } /* Lain-ish font */
+@font-face { font-family: Inconsolata; src: url('/fonts/Inconsolata.otf'); }
+
+div.crt-overlay, div.col-overlay {
+	content: " ";
+	display: block;
+	position: fixed;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	width: 100%;
+	height: 100%;
+}
+
+div.crt-overlay {
+	background:
+		linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
+		linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+	background-size: 100% 8px;
+	background-attachment: fixed;
+	opacity: 0.7;
+	pointer-events: none;
+	animation: scanlines 1s steps(60) infinite;
+	z-index: 50;
+}
+
+div.crt-scanline {
+	content: " ";
+	display: block;
+	position: fixed;
+	width: 100%;
+	height: 2px;
+	z-index: 51;
+	background: rgba(0, 0, 0, 0.3);
+	opacity: 0.8;
+	animation: scanline 6s linear infinite;
+}
+
+div.col-overlay {
+	background-color: #220022f0;
+	z-index: -50;
+}
+
+@keyframes scanlines {
+	0% {
+		background-position: 0 50%;
+	}
+}
+
+@keyframes scanline {
+	0% {
+		transform: translate3d(0,200000%,0);
+	}
+}
+
+html {
+	/*background-image: url("/lain.webp");*/
+	background-color: #220022;
+	color: white;
+	text-shadow: -1px 0px 3px #ffff00ff, -3px 0px 1px #ff0000aa/*, 0px 0px 30px #00ff00ff*/;
+	font-family: Inconsolata;
+}
+
+h1, h2, h3, h4, h5, h6 {
+	font-family: LoveLetter;
+}
+
+h1 {
+	text-align: center;
+	font-size: 52px;
+}
+
+h2 {
+	font-size: 46px;
+}
+
+h3 {
+	font-size: 32px;
+}
+
+p {
+	font-size: 20px;
+}
+
+a {
+	color: #ffddff;
+}
+
+hr {
+	border: 2px solid gray;
+	border-radius: 1px;
+}
+
+a:hover {
+	text-shadow: -2px 0px 6px #ffff00ff, -4px 0px 2px #ff0000aa, 0px 0px 30px #00ff00ff, 0px 0px 20px #88ff88ff;
+	color: white;
+	transition: 0.2s all;
+}
+
+
+div.service-item a img {
+	filter: drop-shadow(-3px 0 3px #ffff0055) drop-shadow(-1px 0 3px #ff000033) drop-shadow(0 0 30px #00ff0055); /* Mozilla only :( */
+	margin-right: 5px;
+}
+
+div.service-item a:hover img {
+	filter: drop-shadow(-2px 0px 4px #ffff00ff) drop-shadow(-2px 0px 2px #ff000088) drop-shadow(0px 0px 10px #00ff00aa) drop-shadow(0px 0px 20px #88ff88ff); /* Mozilla only :( */
+	transition: 0.2s all;
+}
+
+div.main {
+	margin-left: 10%;
+	margin-right: 10%;
+	margin-top: 1%;
+	margin-bottom: 3%;
+	padding-top: 0.1px;
+	padding-bottom: 0.1px;
+	background-color: #440044;
+	border-radius: 5px;
+	box-shadow: -2px -1px 4px #0000ffaa, -3px -2px 6px #ff0000dd, 0px 0px 8px #660066ff;
+}
+
+h2.box-heading p {
+	margin-top: 0;
+	margin-bottom: 0;
+}
+
+div.box {
+	margin-left: 3%;
+	margin-right: 3%;
+	margin-top: 1%;
+	margin-bottom: 1%;
+}
+
+div.services {
+	display: flex;
+	flex-wrap: wrap;
+}
+
+div.service-item {
+	flex: 1;
+	min-width: 300px;
+	margin-top: 2%;
+	margin-bottom: 2%;
+	margin-left: 2%;
+	margin-right: 2%;
+}
+
+div.service-item h3 {
+	margin: 0;
+	display: flex;
+	align-items: center;
+}
