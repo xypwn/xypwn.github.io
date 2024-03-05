@@ -51,18 +51,40 @@
 				background-position: 0 50%;
 			}
 		}
+		#hdr-all-stratagems {
+			color: white;
+			font-family: "Kode Mono";
+			font-weight: 500;
+			font-size: 32px;
+			margin: 5px 15px 5px 15px;
+		}
 		#checkboxes {
 			display: grid;
 			grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
 			grid-column-gap: 10px;
 			grid-row-gap: 10px;
 			font-family: "Kode Mono";
-			margin: 0 20px 0 20px;
+			margin: 0 25px 0 25px;
 		}
 		#checkboxes div.category > h2 {
 			color: white;
-			font-weight: 700;
+			font-weight: 500;
 			margin: 10px 0 10px 0;
+		}
+		#checkboxes div.category > h2 > .text-button,
+		#hdr-all-stratagems > .text-button {
+			font-family: "Teko";
+			font-size: 22px;
+			color: var(--accent);
+			cursor: default;
+			user-select: none;
+			font-weight: 300;
+			margin-left: 5px;
+		}
+		#checkboxes div.category > h2 > .text-button:hover,
+		#hdr-all-stratagems > .text-button:hover {
+			text-decoration: underline 1.5px;
+			text-underline-offset: 0.3rem;
 		}
 		#checkboxes div.item {
 			display: flex;
@@ -167,6 +189,8 @@
 		<img id="arrow-down" src="./assets/down.webp">
 		<img id="arrow-right" src="./assets/right.webp">
 	</div>
+	<hr style="margin-bottom: 50px" />
+	<h2 id="hdr-all-stratagems">All Stratagems<span class="text-button" onclick="setCheckedAllFn(() => true, true)()">(+)</span><span class="text-button" onclick="setCheckedAllFn(() => true, false)()">(-)</span></h2>
 	<div id="checkboxes">
 	</div>
 	<script>
@@ -303,10 +327,29 @@
 			new Stratagem("Eagle 500kg Bomb ",       "eagle-500kg",      "WDSSS", StratagemCategory.OffensiveEagle, ["offense", "eagle"]),
 		];
 		
+		function setAllStratagemsDisabled(val) {
+			for (let i = 0; i < stratagems.length; i++)
+				document.getElementById("check-stratagem-"+i.toString()).disabled = val;
+		}
+		
 		function millis() {
 			return window.performance.now();
 		}
-		
+
+		function setCheckedAllFn(cond, val) {
+			return function() {
+				for (let i = 0; i < stratagems.length; i++) {
+					let sg = stratagems[i];
+					if (!cond(sg))
+						continue;
+					let el = document.getElementById("check-stratagem-"+i.toString());
+					if (el.disabled)
+						continue;
+					el.checked = val;
+				}
+			}
+		}
+
 		const checkboxes = document.getElementById("checkboxes");
 		let stratagemId = 0;
 		for (let category of Object.values(StratagemCategory)) {
@@ -314,6 +357,16 @@
 			container.classList.add("category");
 			let hdr = document.createElement("h2");
 			hdr.innerHTML = category;
+			let btnAdd = document.createElement("span");
+			btnAdd.classList.add("text-button");
+			btnAdd.innerHTML = "(+)";
+			btnAdd.onclick = setCheckedAllFn(true, (sg) => sg.category == category);
+			hdr.append(btnAdd);
+			let btnRemove = document.createElement("span");
+			btnRemove.classList.add("text-button");
+			btnRemove.innerHTML = "(-)";
+			btnRemove.onclick = setCheckedAllFn(false, (sg) => sg.category == category);
+			hdr.append(btnRemove);
 			container.append(hdr);
 			for (let sg of stratagems.filter((v) => v.category == category)) {
 				let id = "check-stratagem-"+stratagemId.toString()
@@ -362,12 +415,8 @@
 		const Easing = {
 			// https://easings.net
 
-			linear: function(x) {
-				return x;
-			},
-			easeOutExp: function(x) {
-				return x === 1 ? 1 : 1 - Math.pow(2, -10 * x);
-			},
+			linear: (x) => x,
+			easeOutExp: (x) => x === 1 ? 1 : 1 - Math.pow(2, -10 * x),
 		};
 
 		class Animation {
@@ -428,8 +477,7 @@
 				this.score = 0;
 				this.round = 1;
 				this.startGetReady();
-				for (let i = 0; i < stratagems.length; i++)
-					document.getElementById("check-stratagem-"+i.toString()).disabled = true;
+				setAllStratagemsDisabled(true);
 			}
 			startRound() {
 				this.getReady = false;
@@ -470,8 +518,7 @@
 				
 				if (timerProg >= 1) {
 					logic = new GameOver(this.score);
-					for (let i = 0; i < stratagems.length; i++)
-						document.getElementById("check-stratagem-"+i.toString()).disabled = false;
+					setAllStratagemsDisabled(false);
 					return;
 				}
 
