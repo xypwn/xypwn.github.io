@@ -224,6 +224,8 @@
 		<img id="arrow-left" src="./assets/left.webp">
 		<img id="arrow-down" src="./assets/down.webp">
 		<img id="arrow-right" src="./assets/right.webp">
+
+		<img id="icon-super-earth" src="./assets/super-earth.png">
 	</div>
 	<hr style="margin-bottom: 50px" />
 	<h2 id="hdr-all-stratagems">All Stratagems<span class="text-button" onclick="setCheckedAllFn(() => true, true)()">(+)</span><span class="text-button" onclick="setCheckedAllFn(() => true, false)()">(-)</span></h2>
@@ -508,6 +510,9 @@
 			constructor() {
 			}
 			draw() {
+				ctx.filter = "opacity(0.3)";
+				ctx.drawImage(document.getElementById("icon-super-earth"), 0.5*cnv.width-0.5*cnv.height, 0, cnv.height, cnv.height);
+				ctx.filter = "none";
 				ctx.fillStyle = "#ffffff";
 				ctx.font = "bold 40px "+font;
 				ctx.textAlign = "center";
@@ -608,6 +613,8 @@
 					for (let i = 0; i < item.sequence.length; i++) {
 						if (i < this.sequenceProgress)
 							ctx.filter = "brightness(3)";
+						else
+							ctx.filter = "brightness(75%)";
 						let addSize = 0;
 						let shakeOffset = 0;
 						let arrowImg = arrowImgs.get(item.sequence[i]);
