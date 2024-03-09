@@ -246,6 +246,59 @@
 			[Key.Right, document.getElementById("arrow-right")],
 		]);
 
+		const clickAudioInstances = 32;
+		const clickAudio = [];
+		for (let i = 0; i < clickAudioInstances; i++) {
+			let a = new Audio("./assets/click.wav");
+			a.preservesPitch = false;
+			clickAudio.push(a);
+		}
+		function playClickAudio(volume, rate) {
+			let inst = -1;
+			for (let i = 0; i < clickAudio.length; i++) {
+				if (clickAudio[i].paused) {
+					inst = i;
+					break;
+				}
+			}
+			if (inst != -1) {
+				clickAudio[inst].volume = volume;
+				clickAudio[inst].playbackRate = rate;
+				clickAudio[inst].play();
+			} else {
+				console.log("audio queue overrun");
+			}
+		}
+		function playClickAudioKey(volume, key) {
+			let playbackRate;
+			switch (key) {
+			case Key.Up:
+				playbackRate = 1.01;
+				break;
+			case Key.Left:
+				playbackRate = 0.99;
+				break;
+			case Key.Down:
+				playbackRate = 1;
+				break;
+			case Key.Right:
+				playbackRate = 0.98;
+				break;
+			default:
+				return;
+			}
+			playbackRate += 0.01*Math.random();
+			playClickAudio(volume, playbackRate);
+		}
+
+		const errorAudio = new Audio("./assets/error.wav");
+		errorAudio.volume = 0.35;
+		function playErrorAudio() {
+			errorAudio.pause();
+			errorAudio.currentTime = 0;
+			errorAudio.play();
+		}
+
 		const tintedArrowImgs = new Map();
 		window.addEventListener("load", function() {
 			for (let [k, v] of arrowImgs) {
@@ -682,9 +735,11 @@
 					return;
 				let item = this.queue[0];
 				if (key == item.sequence[this.sequenceProgress]) {
+					playClickAudioKey(1, key);
 					this.animArrow.start();
 					this.sequenceProgress++;
 				} else {
+					playErrorAudio(key);
 					this.animShake.start();
 					this.animShakeArrowIndex = this.sequenceProgress;
 					this.sequenceProgress = 0;
@@ -698,6 +753,8 @@
 				this.score = score;
 				this.animScore = new Animation(0, score, score, 1700, false, Easing.easeOutExp);
 				this.animScore.start();
+				this.animScoreLastVal = 0;
+				this.animScoreLastClick = 0;
 				this.animText = new Animation(0, 1, 1, 1500);
 				this.animTextStarted = false;
 			}
@@ -714,9 +771,19 @@
 				let finalScoreStrWidth = ctx.measureText(finalScoreStr).width;
 				ctx.fillText("Score: "+Math.floor(this.animScore.value()).toString(), 0.5*cnv.width - finalScoreStrWidth/2, y);
 				y += 40;
+				{
+					let aScore = Math.floor(this.animScore.value());
+					if (aScore != this.animScoreLastVal && millis() - this.animScoreLastClick > 50) {
+						playClickAudio(0.3, 0.8 + 0.6*this.animScore.value()/this.score)
+						this.animScoreLastVal = aScore;
+						this.animScoreLastClick = millis();
+					}
+				}
 				if (!this.animTextStarted && millis() - this.tStart >= 2000) {
 					this.animText.start();
 					this.animTextStarted = true;
+					let clicks = setInterval(() => {playClickAudio(0.1, 1 + 0.01*Math.random());}, 50);
+					setTimeout(() => {clearInterval(clicks);}, 1500);
 				}
 				if (this.animTextStarted) {
 					ctx.fillStyle = "#fff";
@@ -757,6 +824,7 @@
 			default:
 				return;
 			}
+
 			logic.onKey(key);
 			evt.preventDefault();
 		}
