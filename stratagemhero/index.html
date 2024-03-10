@@ -597,7 +597,8 @@
 				this.queue = [];
 				this.sequenceProgress = 0;
 				let avail = stratagems.filter((v, i) => document.getElementById("check-stratagem-"+i.toString()).checked);
-				for (let i = 0; i < 6; i++) {
+				let numStratagems = Math.floor(6 + this.round / 2);
+				for (let i = 0; i < numStratagems; i++) {
 					let randIdx = Math.floor(Math.random() * avail.length);
 					this.queue.push(avail[randIdx]);
 				}
@@ -608,11 +609,11 @@
 			}
 			drawGame() {
 				if (!this.animArrow.active && this.queue.length > 0 && this.sequenceProgress >= this.queue[0].sequence.length) {
+					this.bonusTime += 0.2 * this.queue[0].sequence.length;
+					this.score += 5 * this.queue[0].sequence.length;
 					this.queue.shift();
 					this.sequenceProgress = 0;
-					this.bonusTime += 1;
-					this.score += 30;
-				}			
+				}
 
 				if (this.queue.length == 0) {
 					this.round++;
@@ -774,7 +775,7 @@
 				{
 					let aScore = Math.floor(this.animScore.value());
 					if (aScore != this.animScoreLastVal && millis() - this.animScoreLastClick > 50) {
-						playClickAudio(0.3, 0.8 + 0.6*this.animScore.value()/this.score)
+						playClickAudio(0.3, 1 + 0.5*this.animScore.value()/this.score)
 						this.animScoreLastVal = aScore;
 						this.animScoreLastClick = millis();
 					}
