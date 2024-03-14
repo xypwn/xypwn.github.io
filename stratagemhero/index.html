@@ -246,58 +246,57 @@
 			[Key.Right, document.getElementById("arrow-right")],
 		]);
 
-		const clickAudioInstances = 32;
-		const clickAudio = [];
-		for (let i = 0; i < clickAudioInstances; i++) {
-			let a = new Audio("./assets/click.wav");
-			a.preservesPitch = false;
-			clickAudio.push(a);
-		}
-		function playClickAudio(volume, rate) {
-			let inst = -1;
-			for (let i = 0; i < clickAudio.length; i++) {
-				if (clickAudio[i].paused) {
-					inst = i;
-					break;
+		class GameSound {
+			constructor(url, instances=1) {
+				this.audio = [];
+				let a = new Audio(url);
+				a.preservesPitch = false;
+				for (let i = 0; i < instances; i++)
+					this.audio.push(a.cloneNode(true));
+			}
+
+			play(volume, pitch=1) {
+				let inst = -1;
+				for (let i = 0; i < this.audio.length; i++) {
+					if (this.audio[i].paused) {
+						inst = i;
+						break;
+					}
+				}
+				if (inst != -1) {
+					this.audio[inst].volume = volume;
+					this.audio[inst].playbackRate = pitch;
+					this.audio[inst].play();
+				} else {
+					console.log("audio queue overrun");
 				}
 			}
-			if (inst != -1) {
-				clickAudio[inst].volume = volume;
-				clickAudio[inst].playbackRate = rate;
-				clickAudio[inst].play();
-			} else {
-				console.log("audio queue overrun");
-			}
 		}
-		function playClickAudioKey(volume, key) {
-			let playbackRate;
+
+		let clickSound = new GameSound("./assets/click.wav", 32);
+		clickSound.playKey = function(volume, key) {
+			let pitch;
 			switch (key) {
 			case Key.Up:
-				playbackRate = 1.01;
+				pitch = 1.01;
 				break;
 			case Key.Left:
-				playbackRate = 0.99;
+				pitch = 0.99;
 				break;
 			case Key.Down:
-				playbackRate = 1;
+				pitch = 1;
 				break;
 			case Key.Right:
-				playbackRate = 0.98;
+				pitch = 0.98;
 				break;
 			default:
 				return;
 			}
-			playbackRate += 0.01*Math.random();
-			playClickAudio(volume, playbackRate);
+			pitch += 0.01*Math.random();
+			this.play(volume, pitch);
 		}
 
-		const errorAudio = new Audio("./assets/error.wav");
-		errorAudio.volume = 0.35;
-		function playErrorAudio() {
-			errorAudio.pause();
-			errorAudio.currentTime = 0;
-			errorAudio.play();
-		}
+		let errorSound = new GameSound("./assets/error.wav", 4);
 
 		const tintedArrowImgs = new Map();
 		window.addEventListener("load", function() {
@@ -417,12 +416,12 @@
 			new Stratagem("Eagle 110MM Rocket Pods", "eagle-110mm",      "WDWA",  StratagemCategory.OffensiveEagle, ["offense", "eagle"]),
 			new Stratagem("Eagle 500kg Bomb ",       "eagle-500kg",      "WDSSS", StratagemCategory.OffensiveEagle, ["offense", "eagle"]),
 		];
-		
+
 		function setAllStratagemsDisabled(val) {
 			for (let i = 0; i < stratagems.length; i++)
 				document.getElementById("check-stratagem-"+i.toString()).disabled = val;
 		}
-		
+
 		function millis() {
 			return window.performance.now();
 		}
@@ -563,14 +562,15 @@
 			constructor() {
 			}
 			draw() {
-				ctx.filter = "opacity(0.3)";
-				ctx.drawImage(document.getElementById("icon-super-earth"), 0.5*cnv.width-0.5*cnv.height, 0, cnv.height, cnv.height);
+				const sz = 0.7;
+				ctx.filter = "opacity(0.2)";
+				ctx.drawImage(document.getElementById("icon-super-earth"), 0.5*cnv.width-0.5*sz*cnv.height, 0.5*(1-sz)*cnv.height, sz*cnv.height, sz*cnv.height);
 				ctx.filter = "none";
 				ctx.fillStyle = "#ffffff";
 				ctx.font = "bold 40px "+font;
 				ctx.textAlign = "center";
 				ctx.textBaseline = "center";
-				ctx.fillText("STRATAGEM HERO", 0.5*cnv.width, 0.5*cnv.height);
+				ctx.fillText("STRATAGEM HERO", 0.5*cnv.width, 0.55*cnv.height);
 				ctx.fillStyle = colorAccent;				
 				ctx.font = "bold 20px "+font;
 				ctx.fillText("Enter any Stratagem Input to Start!", 0.5*cnv.width, 0.8*cnv.height);
@@ -597,7 +597,7 @@
 				this.queue = [];
 				this.sequenceProgress = 0;
 				let avail = stratagems.filter((v, i) => document.getElementById("check-stratagem-"+i.toString()).checked);
-				let numStratagems = Math.floor(6 + this.round / 2);
+				let numStratagems = Math.floor(6 + Math.sqrt(this.round));
 				for (let i = 0; i < numStratagems; i++) {
 					let randIdx = Math.floor(Math.random() * avail.length);
 					this.queue.push(avail[randIdx]);
@@ -736,11 +736,11 @@
 					return;
 				let item = this.queue[0];
 				if (key == item.sequence[this.sequenceProgress]) {
-					playClickAudioKey(1, key);
+					clickSound.playKey(1, key);
 					this.animArrow.start();
 					this.sequenceProgress++;
 				} else {
-					playErrorAudio(key);
+					errorSound.play(0.35);
 					this.animShake.start();
 					this.animShakeArrowIndex = this.sequenceProgress;
 					this.sequenceProgress = 0;
@@ -775,7 +775,7 @@
 				{
 					let aScore = Math.floor(this.animScore.value());
 					if (aScore != this.animScoreLastVal && millis() - this.animScoreLastClick > 50) {
-						playClickAudio(0.3, 1 + 0.5*this.animScore.value()/this.score)
+						clickSound.play(0.3, 1 + 0.5*this.animScore.value()/this.score)
 						this.animScoreLastVal = aScore;
 						this.animScoreLastClick = millis();
 					}
@@ -783,7 +783,7 @@
 				if (!this.animTextStarted && millis() - this.tStart >= 2000) {
 					this.animText.start();
 					this.animTextStarted = true;
-					let clicks = setInterval(() => {playClickAudio(0.1, 1 + 0.01*Math.random());}, 50);
+					let clicks = setInterval(() => {clickSound.play(0.1, 1 + 0.01*Math.random());}, 50);
 					setTimeout(() => {clearInterval(clicks);}, 1500);
 				}
 				if (this.animTextStarted) {
